@@ -6,7 +6,7 @@
   <script src="overlay.js"/>
 
   <menupopup id="menu_ToolsPopup">
-    <menuitem id="delinkydink-hello" label="&delinkydink;"
+    <menuitem id="delinkydink" label="&delinkydink;"
         oncommand="Delinkydink.onMenuItemCommand(event);"/>
   </menupopup>
 </overlay>

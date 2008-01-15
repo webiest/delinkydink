@@ -5,7 +5,7 @@ var Delinkydink = {
   },
 
   onMenuItemCommand: function() {
-    window.open("chrome://delinkydink/content/hello.xul", "", "chrome");
+    window.open("chrome://delinkydink/content/delinkydink.xul", "", "chrome");
   }
 };
 
