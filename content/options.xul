@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+ 
+ <prefwindow id="delinkydink-prefs"
+      title="Delinkydink Options"
+      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+     <prefpane id="delinkydinkPane" label="delinkydink Settings">
+		<preferences>
+			<preference id="pref_username" name="extensions.delinkydink.username" type="string" />
+			<preference id="pref_interval" name="extensions.delinkydink.interval" type="int" />
+        </preferences>
+  		<hbox align="center">
+    			<label control="username" value="del.icio.us Username"/>
+			    <textbox preference="pref_username" id="username" maxlength="30"/>
+  		</hbox>
+  		<hbox align="center">
+    			<label control="interval" value="Update Interval (secs): "/>
+			    <textbox preference="pref_interval" id="interval" maxlength="4"/>
+  		</hbox>
+ 		
+   	</prefpane>
+  </prefwindow>
