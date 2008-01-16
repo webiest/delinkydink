@@ -2,18 +2,10 @@
 <?xml-stylesheet href="chrome://delinkydink/skin/overlay.css" type="text/css"?>
 <!DOCTYPE overlay SYSTEM "chrome://delinkydink/locale/overlay.dtd">
 <overlay id="delinkydink-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <script src="overlay.js"/>
-  <statusbar id="status-bar">
-    <statusbarpanel id="delinkydink__stat2" onclick="alert(getURL());">
-      <description>delinkydink</description>
-    </statusbarpanel>
-  </statusbar>
-
-
-  
-  
-  <menupopup id="menu_ToolsPopup">
-    <menuitem id="delinkydink" label="&delinkydink;"
-        oncommand="Delinkydink.onMenuItemCommand(event);"/>
-  </menupopup>
+	<script src="overlay.js"/>
+	<statusbar id="status-bar">
+		<statusbarpanel id="delinkydink2" onclick="Delinkydink.onClickCommand(event);">
+			<description>delinkydink</description>
+		</statusbarpanel>
+	</statusbar> 
 </overlay>
