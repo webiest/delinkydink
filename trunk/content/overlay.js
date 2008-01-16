@@ -8,13 +8,13 @@ var Delinkydink = {
 	onClickCommand: function() {
 		req = new XMLHttpRequest();
 		network_link='http://del.icio.us/network/'+prefs.getCharPref("extensions.delinkydink.username");
-		alert (network_link);
+		Log.log(network_link);
 		req.open('get', network_link, true);
 		req.setRequestHeader('User-Agent', 'blah blah');
 		req.setRequestHeader('Accept-Charset','utf-8');
 		req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 		req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-		Log.log('unr = false');
+
 		req.onreadystatechange=state_Change;
 		req.send(null); 		
 	},
@@ -32,13 +32,20 @@ function getURL() {
 
 function state_Change() {
 	if (req.readyState==4) {
-		alert ('readystate=4');
-		alert (req.responseText);
-		var t=req.responseText.getElementsByTagName("title");
-		alert(t);
 	if (req.status==200){
-    // ...some code here...
-    } else {
+		Log.log("got response");
+		var pos=-1;
+		var endpos=-1;
+		response = req.responseText;
+		
+		pos = response.indexOf('<li class=\"bundle fold\">', pos+1);
+		endpos = response.indexOf('<div class=\"mutualKey\">mutual connection</div>', pos+1);
+		network_peeps = response.substring(pos, endpos+5);
+		
+
+		Log.log(network_peeps);
+	  
+	} else {
 		alert("Problem retrieving XML data");
     }
   }
