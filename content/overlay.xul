@@ -4,8 +4,9 @@
 <overlay id="delinkydink-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	<script src="overlay.js"/>
 	<statusbar id="status-bar">
-		<statusbarpanel id="delinkydink2" onclick="Delinkydink.onClickCommand(event);">
-			<description>delinkydink</description>
-		</statusbarpanel>
+		<menu id="delinkydink-menu" label="delinkydink" onclick="document.getElementById('delinkymenu').showPopup();"> 
+			<menupopup id = "delinkymenu" >
+			</menupopup>
+		</menu>
 	</statusbar> 
 </overlay>
