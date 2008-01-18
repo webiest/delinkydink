@@ -2,16 +2,33 @@ var prefs = Components.classes["@mozilla.org/preferences-service;1"].
 	                getService(Components.interfaces.nsIPrefBranch);
 
 var clickcount=0;
+
+function checkLinks(){
+	req = new XMLHttpRequest();
+	network_link='http://del.icio.us/for/'+prefs.getCharPref("extensions.delinkydink.username");
+	req.open('get', network_link, true);
+	req.setRequestHeader('User-Agent', 'Delinkydink');
+	req.setRequestHeader('Accept-Charset','utf-8');
+	req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+	req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+	req.onreadystatechange=state_Change_get_links;
+	req.send(null);
+	setTimeout(function(){checkLinks()},prefs.getIntPref("extensions.delinkydink.interval")*2000);
+}
 					
 var Delinkydink = {
 	onLoad: function() {
 		this.initialized = true;
+		checkLinks();		
+		//prefs.setCharPref('extensions.delinkydink.lasturl', "www.google.com");
+		
 		if(prefs.getCharPref("extensions.delinkydink.username")==undefined || prefs.getCharPref("extensions.delinkydink.username")==''){
-			alert ("Please enter your del.icio.us username in the extention options panel");
+			prefs.setIntPref('extensions.delinkydink.interval', 10);
+			window.openDialog("chrome://delinkydink/content/options.xul", 'Delinkydink', 'chrome,titlebar,toolbar,centerscreen,modal');
 		}else{
 			req = new XMLHttpRequest();
 			network_link='http://del.icio.us/network/'+prefs.getCharPref("extensions.delinkydink.username");
-			Log.log(network_link);
+		
 			req.open('get', network_link, true);
 			req.setRequestHeader('User-Agent', 'Delinkydink');
 			req.setRequestHeader('Accept-Charset','utf-8');
@@ -34,7 +51,7 @@ var Delinkydink = {
 			req2.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 			req2.onreadystatechange=state_Change_del;
 			the_package="&url="+escape(getURL())+"&description="+escape(getTITLE())+"&tags=Delinkydink%20"+escape("for:"+thisperson);
-			Log.log(the_package);
+		
 			req2.send(the_package); 	
 		}else{
 			clickcount=0;
@@ -68,13 +85,57 @@ function state_Change_del() {
   }
 }
 
+function state_Change_get_links() {
+	if (req.readyState==4) {
+		if (req.status==200){
+	
+			var pos=-1;
+			var endpos=-1;
+			var i=0;
+			var freshlinks=new Array();
+			var freshlinks_titles=new Array();
+			response = req.responseText;
+			pos = response.indexOf('links for you (', pos+1);
+			if(pos > 0){
+				endpos = response.indexOf('"post first-old-post"', pos+1);
+				new_links = response.substring(pos, endpos+5);
+				link_scrape_endpos=endpos;
+				while (pos < link_scrape_endpos){
+					pos = response.indexOf('<h4 class=\"desc\"><a href=\"', pos+1);
+					endpos = response.indexOf('\" rel=\"', pos+1);
+					thislink = response.substring(pos+26, endpos);
+					
+					pos2 = response.indexOf('nofollow\">', endpos+1);
+					endpos2 = response.indexOf('</a>', pos2+1);
+					thistitle = response.substring(pos2+10, endpos2);
+					
+					freshlinks.push(thislink);
+					freshlinks_titles.push(thistitle);
+			    }
+				sendTheLinks(freshlinks,freshlinks_titles);
+			}
+		}
+	}
+}		
+					
+function sendTheLinks(freshlinks,freshlinks_titles){
+	var j=0;
+	for(i=0;i<freshlinks.length;i++){
+		setTimeout(function() { 
+			thisfreshlinktitle=freshlinks_titles[j];
+			thisfreshlink=freshlinks[j];
+			j++;
+			showNotification(thisfreshlinktitle,thisfreshlink)
+		}, (i+1)*6000);
+	}
+}				
 function state_Change() {
 	if (req.readyState==4) {
 		if (req.status==200){
 			var pos=-1;
 			var endpos=-1;
 			var i=0;
-			var peeps=new Array();
+			
 			response = req.responseText;
 			pos = response.indexOf('<li class=\"bundle fold\">', pos+1);
 			endpos = response.indexOf('<div class=\"mutualKey\">mutual connection</div>', pos+1);
@@ -109,3 +170,49 @@ var Log = {
     this.serv.logStringMessage('DLD: '+message);
   }
 };  
+
+var showNotification = function(label, value)
+{
+
+  image ="chrome://mozapps/skin/downloads/downloadIcon.png"
+  try
+  {
+    /**
+     * Notifier for Windows
+     */
+	 
+	var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
+                              .getService(Components.interfaces.nsIAlertsService);
+	alertsService.showAlertNotification(image, label, value, true, "http://google.com", openLinkNotify);
+  }
+  catch(e)
+  {
+    try
+    {
+      /**
+      * Notifier for Linux
+      */
+      var alertWin = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+        .getService(Components.interfaces.nsIWindowWatcher)
+        .openWindow(null, "chrome://global/content/alerts/alert.xul", "_blank", "chrome,titlebar=no,popup=yes", null);
+        alertWin.arguments = [image, label, value, true, "link_url", 0, openLinkNotify];
+        alertWin.setTimeout(function(){alertWin.close()},10000);
+    }
+    catch(e)
+    {}
+  }
+};
+
+var openLinkNotify =
+{
+  observe: function(subject, topic, data)
+  {
+    if(topic == 'alertclickcallback')
+    {
+      //GRCheck.openReader();
+	  gBrowser.selectedTab = gBrowser.addTab(data);
+	 alert(prefs.getIntPref('extensions.delinkydink.nonexistent'));
+	  //window.location=data;
+    }
+  }
+};
