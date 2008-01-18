@@ -6,16 +6,20 @@ var clickcount=0;
 var Delinkydink = {
 	onLoad: function() {
 		this.initialized = true;
-		req = new XMLHttpRequest();
-		network_link='http://del.icio.us/network/'+prefs.getCharPref("extensions.delinkydink.username");
-		Log.log(network_link);
-		req.open('get', network_link, true);
-		req.setRequestHeader('User-Agent', 'Delinkydink');
-		req.setRequestHeader('Accept-Charset','utf-8');
-		req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-		req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-		req.onreadystatechange=state_Change;
-		req.send(null); 		
+		if(prefs.getCharPref("extensions.delinkydink.username")==undefined || prefs.getCharPref("extensions.delinkydink.username")==''){
+			alert ("Please enter your del.icio.us username in the extention options panel");
+		}else{
+			req = new XMLHttpRequest();
+			network_link='http://del.icio.us/network/'+prefs.getCharPref("extensions.delinkydink.username");
+			Log.log(network_link);
+			req.open('get', network_link, true);
+			req.setRequestHeader('User-Agent', 'Delinkydink');
+			req.setRequestHeader('Accept-Charset','utf-8');
+			req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+			req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+			req.onreadystatechange=state_Change;
+			req.send(null);
+		}		 		
 	},
   
 	onClickCommand: function(thisperson) {
@@ -29,7 +33,8 @@ var Delinkydink = {
 			req2.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 			req2.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 			req2.onreadystatechange=state_Change_del;
-			the_package="&url="+escape(getURL())+"&description=Delinkydink&tags="+escape("for:"+thisperson);
+			the_package="&url="+escape(getURL())+"&description="+escape(getTITLE())+"&tags=Delinkydink%20"+escape("for:"+thisperson);
+			Log.log(the_package);
 			req2.send(the_package); 	
 		}else{
 			clickcount=0;
@@ -44,6 +49,13 @@ function getURL() {
            getService(Components.interfaces.nsIWindowMediator);
   var recentWindow = wm.getMostRecentWindow("navigator:browser");
   return  recentWindow ? recentWindow.content.document.location : null;
+}
+
+function getTITLE() {
+  var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
+           getService(Components.interfaces.nsIWindowMediator);
+  var recentWindow = wm.getMostRecentWindow("navigator:browser");
+  return  recentWindow.title ? recentWindow.content.document.title : null;
 }
 
 function state_Change_del() {
