@@ -1,11 +1,9 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://delinkydink/skin/overlay.css" type="text/css"?>
-<!DOCTYPE overlay SYSTEM "chrome://delinkydink/locale/overlay.dtd">
 <overlay id="delinkydink-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	<script src="overlay.js"/>
 	<statusbar id="status-bar">
-		<menu id="delinkydink-menu" label="delinkydink" onclick="document.getElementById('delinkymenu').showPopup();"> 
-			<menupopup id = "delinkymenu" >
+		<menu id="delinkydink-menu" label="Send this link to:" onclick="document.getElementById('delinkymenu').showPopup();"> 
+			<menupopup id = "delinkymenu"  onclick="document.getElementById('delinkymenu').hidePopup();">
 			</menupopup>
 		</menu>
 	</statusbar> 
