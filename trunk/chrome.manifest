@@ -1,7 +1,3 @@
 content delinkydink content/
 overlay chrome://browser/content/browser.xul chrome://delinkydink/content/overlay.xul
-
-locale delinkydink en-US locale/en-US/
-
 skin delinkydink classic/1.0 skin/
-style chrome://global/content/customizeToolbar.xul chrome://delinkydink/skin/overlay.css
