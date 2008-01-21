@@ -129,43 +129,36 @@ function getNetwork(){
 	req.send(null);
 }
 
-function state_Change_getNetwork() {
-	if (req.readyState==4) {
-		if (req.status==200){
+function state_Change_getNetwork() 
+{
+	if (req.readyState==4) 
+	{
+		if (req.status==200)
+		{
 			var mynetwork = eval('(' + req.responseText + ')');
 			var element = document.getElementById("delinkymenu");
-			while (element.firstChild) {
+			while (element.firstChild) 
+			{
 				element.removeChild(element.firstChild);
 			}
-			for (var i=0, name; name=mynetwork[i]; i++) {
-				newElement = document.createElement("menuitem");
-			    var node = newElement
-				var a = document.createAttribute("label");
-				a.nodeValue = name;
-				node.setAttributeNode(a);
-				var c = document.createAttribute("onmouseup");
-				c.nodeValue = "Delinkydink.onClickCommand('"+name+"');";
-				node.setAttributeNode(c);
-				document.getElementById('delinkymenu').appendChild(newElement); 
+			for (var i=0, name; name=mynetwork[i]; i++) 
+			{
+				var NewMenuItem = document.createElement("menuitem");
+				var LabelAttr = document.createAttribute("label");
+                var OnmouseupAttr = document.createAttribute("onmouseup");
+                
+				LabelAttr.nodeValue = name;
+				OnmouseupAttr.nodeValue = "Delinkydink.onClickCommand('"+name+"');";
+
+				NewMenuItem.setAttributeNode(LabelAttr);
+				NewMenuItem.setAttributeNode(OnmouseupAttr);
+				
+				document.getElementById('delinkymenu').appendChild(NewMenuItem); 
 			}
-			
-			/*newElement = document.createElement("menuseparator");
-			document.getElementById('delinkymenu').appendChild(newElement); 
-			newElement = document.createElement("menuitem");
-			var node = newElement
-			var d = document.createAttribute("label");
-			d.nodeValue = "Logout ("+prefs.getCharPref("extensions.delinkydink.username")+")";
-			node.setAttributeNode(d);
-			var e = document.createAttribute("onclick");
-			e.nodeValue = "doLogout();";
-			node.setAttributeNode(e);
-			var f = document.createAttribute("onmouseup");
-			f.nodeValue = "doLogout();";
-			node.setAttributeNode(f);
-			document.getElementById('delinkymenu').appendChild(newElement); 
-			*/
-		} else {
-			showNotificationWindow("Problem retrieving data from del","-");	
+		} 
+		else
+		{
+			showNotificationWindow("Problem retrieving data from del.icio.us!","-");	
 		}
 	}
 }
