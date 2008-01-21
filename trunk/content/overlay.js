@@ -71,13 +71,13 @@ Log.log("state_Change_onClickCommand = "+req.readyState);
 		var xmlDoc=req.responseXML.documentElement;
 		xmlDoc.getElementsByTagName("result");
 		if(xmlDoc.attributes.getNamedItem("code").value=="done"){	
-			showNotificationWindow(getTITLE(),"Sent To "+thisnetworkperson_global, false);	
+			showNotificationWindow(getTITLE(),"Sent To "+thisnetworkperson_global, '', false);	
 			thisnetworkperson_global='';
 		}else{
-			showNotificationWindow("Error:",req.responseText,false);	
+			showNotificationWindow("Error:",req.responseText,'',false);	
 		}
 	} else {
-		showNotificationWindow("Problem retrieving data from del","-");	
+		showNotificationWindow("Problem retrieving data from del",'','',false);	
     }
   }
 }
@@ -118,7 +118,7 @@ function state_Change_initialLogin() {
 			prefs.setCharPref("extensions.delinkydink.username",xmlDoc.attributes.getNamedItem("user").value);
 			getNetwork();
 		}else{
-			showNotificationWindow("Error:",req.responseText,false);	
+			showNotificationWindow("Error:",req.responseText,'',false);	
 		}
 	}
 }
@@ -198,12 +198,13 @@ function state_Change_checkLinks() {
 			var endpos=-1;
 			var freshlinks=new Array();
 			var freshlinks_titles=new Array();
+			var freshlinks_users=new Array();
+			var freshlinks_times=new Array();
+						
 			response = req2.responseText;
 			pos = response.indexOf('links for you (', pos+1);
 			if( pos > 0){
-				endpos = response.indexOf('"post first-old-post"', pos+1);
-				new_links = response.substring(pos, endpos+5);
-				link_scrape_endpos=endpos;
+				link_scrape_endpos = response.indexOf('"post first-old-post"', pos+1);
 				while (pos < link_scrape_endpos){
 					pos = response.indexOf('<h4 class=\"desc\"><a href=\"', pos+1);
 					endpos = response.indexOf('\" rel=\"', pos+1);
@@ -211,10 +212,20 @@ function state_Change_checkLinks() {
 					pos2 = response.indexOf('nofollow\">', endpos+1);
 					endpos2 = response.indexOf('</a>', pos2+1);
 					thistitle = response.substring(pos2+10, endpos2);
-					freshlinks.push(thislink);
-					freshlinks_titles.push(thistitle);
+					pos3 = response.indexOf('class=\"user\">', endpos2+1);
+					endpos3 = response.indexOf('</a>', pos3+1);
+					thislinkuser = response.substring(pos3+13, endpos3);
+					pos4 = response.indexOf('<span class=\"date\" title=\"', endpos3+1);
+					endpos4 = response.indexOf('</span>', pos4+1);
+					thislinkuserdate = response.substring(pos4+48, endpos4);
+					if(pos < link_scrape_endpos){
+						freshlinks.push(thislink);
+						freshlinks_titles.push(thistitle);
+						freshlinks_users.push(thislinkuser);
+						freshlinks_times.push(thislinkuserdate);
+					}
 			    }
-				sendTheLinks(freshlinks,freshlinks_titles);
+				sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_times);
 			}
 			pos = response.indexOf('You have to be logged in', 0); 
 			if (pos > 0){
@@ -226,7 +237,7 @@ function state_Change_checkLinks() {
 				req2.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 				req2.onreadystatechange=state_Change_default;
 				req2.send("&username="+pass.user+"&password="+pass.password);
-				showNotificationWindow("Please login to del.icio.us as "+prefs.getCharPref("extensions.delinkydink.username")+" to retrieve your \"links for you\"","");	
+				showNotificationWindow("Please login to del.icio.us as "+prefs.getCharPref("extensions.delinkydink.username")+" to retrieve your \"links for you\"","",'',false);	
 				gBrowser.selectedTab = gBrowser.addTab("https://secure.del.icio.us/login");	
 			}			
 		}
@@ -241,14 +252,15 @@ function state_Change_default() {
 	}
 }
 
-function sendTheLinks(freshlinks,freshlinks_titles){
+function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_times){
 	var j=0;
 	for(i=0;i<freshlinks.length;i++){
 		setTimeout(function() { 
 			thisfreshlinktitle=freshlinks_titles[j];
 			thisfreshlink=freshlinks[j];
+			thisfreshlinkheader="From: "+freshlinks_users[j]+" "+freshlinks_times[j];
 			j++;
-			showNotificationWindow(thisfreshlinktitle,thisfreshlink)
+			showNotificationWindow(thisfreshlinkheader,thisfreshlinktitle,thisfreshlink)
 		}, (i+1)*6000);
 	}
 }				
@@ -282,20 +294,20 @@ function doLogout(){
 
  
 
-var showNotificationWindow = function(label, value, linkit) {
+var showNotificationWindow = function(label, value, link, linkit) {
 	if(linkit==undefined){linkit=true;}
 	image ="chrome://delinkydink/skin/delinkydink.png"
 	try {
 		var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                               .getService(Components.interfaces.nsIAlertsService);
-		alertsService.showAlertNotification(image, label, value, linkit, value, openLinkNotify);
+		alertsService.showAlertNotification(image, label, value, linkit, link, openLinkNotify);
 	}
 	catch(e) {
-		try {
+		try { //for linux, needs testing
 			var alertWin = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
 			.getService(Components.interfaces.nsIWindowWatcher)
 			.openWindow(null, "chrome://global/content/alerts/alert.xul", "_blank", "chrome,titlebar=no,popup=yes", null);
-			alertWin.arguments = [image, label, value, true, value, 0, openLinkNotify];
+			alertWin.arguments = [image, label, value, linkit, link, 0, openLinkNotify];
 			alertWin.setTimeout(function(){alertWin.close()},10000);
 		}
 		catch(e)
