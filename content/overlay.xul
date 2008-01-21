@@ -2,8 +2,8 @@
 <overlay id="delinkydink-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	<script src="overlay.js"/>
 	<statusbar id="status-bar">
-		<menu id="delinkydink-menu" label="Send this link to:" onclick="document.getElementById('delinkymenu').showPopup();"> 
-			<menupopup id = "delinkymenu"  onclick="document.getElementById('delinkymenu').hidePopup();">
+		<menu id="delinkydink-menu" label="Send this link to:" onclick="if(event.target.localName=='menu'){document.getElementById('delinkymenu').showPopup();}"> 
+			<menupopup id = "delinkymenu"  onmouseup="document.getElementById('delinkymenu').hidePopup();">
 			</menupopup>
 		</menu>
 	</statusbar> 
