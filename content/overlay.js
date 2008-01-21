@@ -123,26 +123,21 @@ function state_Change_initialLogin() {
 	}
 }
 
-function getNetwork(){
+function getNetwork() {
 	this_link='http://del.icio.us/feeds/json/network/'+prefs.getCharPref("extensions.delinkydink.username");
 	doAjax('GET',this_link,state_Change_getNetwork);
 	req.send(null);
 }
 
-function state_Change_getNetwork() 
-{
-	if (req.readyState==4) 
-	{
-		if (req.status==200)
-		{
+function state_Change_getNetwork() {
+	if (req.readyState==4) {
+		if (req.status==200) {
 			var mynetwork = eval('(' + req.responseText + ')');
 			var element = document.getElementById("delinkymenu");
-			while (element.firstChild) 
-			{
+			while (element.firstChild) {
 				element.removeChild(element.firstChild);
 			}
-			for (var i=0, name; name=mynetwork[i]; i++) 
-			{
+			for (var i=0, name; name=mynetwork[i]; i++) {
 				var NewMenuItem = document.createElement("menuitem");
 				var LabelAttr = document.createAttribute("label");
                 var OnmouseupAttr = document.createAttribute("onmouseup");
@@ -156,8 +151,7 @@ function state_Change_getNetwork()
 				document.getElementById('delinkymenu').appendChild(NewMenuItem); 
 			}
 		} 
-		else
-		{
+		else {
 			showNotificationWindow("Problem retrieving data from del.icio.us!","-");	
 		}
 	}
@@ -257,35 +251,6 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 		}, (i+1)*6000);
 	}
 }				
-/*
-function doLogout(){
-	var element = document.getElementById("delinkymenu");
-	while (element.firstChild) {
-		element.removeChild(element.firstChild);
-	}
-	newElement = document.createElement("menuitem");
-	var node = newElement
-	var d = document.createAttribute("label");
-	d.nodeValue = "Login";
-	node.setAttributeNode(d);
-	var e = document.createAttribute("onclick");
-	e.nodeValue = "initialLogin();";
-	node.setAttributeNode(e);
-	var f = document.createAttribute("onmouseup");
-	f.nodeValue = "initialLogin();";
-	node.setAttributeNode(f);
-	document.getElementById('delinkymenu').appendChild(newElement); 
-	
-    //var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
-    //                            .getService(Components.interfaces.nsIPasswordManager);
-	//passwordManager.addUser('api.del.icio.us:443 (del.icio.us API)', prefs.getCharPref("extensions.delinkydink.username"), '');						
-	//prefs.setCharPref("extensions.delinkydink.username",'')
-	gBrowser.selectedTab = gBrowser.addTab("http://del.icio.us/logout");	
-	//showNotificationWindow("Restart firefox to change del.icio.us users","",false);	
-}  
-*/
-
- 
 
 var showNotificationWindow = function(label, value, link, linkit) {
 	if(linkit==undefined){linkit=true;}
