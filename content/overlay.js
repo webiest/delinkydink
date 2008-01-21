@@ -35,28 +35,19 @@ var Delinkydink = {
 	this.initialized = true;
 	try {
 		deluser=prefs.getCharPref("extensions.delinkydink.username");
+		getNetwork();
 	}
 	catch(e) {
 		deluser = '';
-	}
-    if(deluser==undefined || deluser==''){
 		initialLogin();
-	}else{
-		getNetwork();
 	}
+
 	checkLinks();
 	},
   
 	onClickCommand: function(thisnetworkperson) {
-		Log.log("clicked "+thisnetworkperson+clickcount);
-			req = new XMLHttpRequest();
-			req.open("POST", 'https://api.del.icio.us/v1/posts/add?', true ,pass.user,pass.password);
-			req.setRequestHeader('User-Agent', 'Delinkydink2');
-			req.setRequestHeader('Accept-Charset','utf-8');
-			req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-			req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-			req.onreadystatechange=state_Change_onClickCommand;
-			the_package="&url="+escape(getURL())+"&description="+escape(getTITLE())+"&tags="+escape("for:"+thisnetworkperson);
+			doAjax("POST",'https://api.del.icio.us/v1/posts/add?',state_Change_onClickCommand,pass.user,pass.password);
+			the_package="&url="+escape(getURLinfo())+"&description="+escape(getURLinfo('title'))+"&tags="+escape("for:"+thisnetworkperson);
 			thisnetworkperson_global=thisnetworkperson;
 			req.send(the_package); 
 	}
@@ -68,24 +59,24 @@ function state_Change_onClickCommand() {
 Log.log("state_Change_onClickCommand = "+req.readyState);
 	if (req.readyState==4) {
 		if (req.status==200){
-		var xmlDoc=req.responseXML.documentElement;
-		xmlDoc.getElementsByTagName("result");
-		if(xmlDoc.attributes.getNamedItem("code").value=="done"){	
-			showNotificationWindow(getTITLE(),"Sent To "+thisnetworkperson_global, '', false);	
-			thisnetworkperson_global='';
-		}else{
-			showNotificationWindow("Error:",req.responseText,'',false);	
+			var xmlDoc=req.responseXML.documentElement;
+			xmlDoc.getElementsByTagName("result");
+			if(xmlDoc.attributes.getNamedItem("code").value=="done"){	
+				showNotificationWindow(getURLinfo('title'),"Sent To "+thisnetworkperson_global, '', false);	
+				thisnetworkperson_global='';
+			}else{
+				showNotificationWindow("Error:",req.responseText,'',false);	
+			}
+		} else {
+			showNotificationWindow("Problem retrieving data from del",'','',false);	
 		}
-	} else {
-		showNotificationWindow("Problem retrieving data from del",'','',false);	
-    }
-  }
+	}
 }
 
-function doAjax(method,link,callback){
+function doAjax(method,link,callback,username,password){
 	Log.log("doAjax "+link);
 	req = new XMLHttpRequest();
-	req.open(method, link, true);
+	req.open(method, link, true, username, password);
 	req.setRequestHeader('User-Agent', 'Delinkydink2');
 	req.setRequestHeader('Accept-Charset','utf-8');
 	req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -157,19 +148,16 @@ function state_Change_getNetwork() {
 	}
 }
 
-
-function getURL() {
-  var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
+function getURLinfo(type) {
+	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
            getService(Components.interfaces.nsIWindowMediator);
-  var recentWindow = wm.getMostRecentWindow("navigator:browser");
-  return recentWindow ? recentWindow.content.document.location : null;
-}
-
-function getTITLE() {
-  var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
-           getService(Components.interfaces.nsIWindowMediator);
-  var recentWindow = wm.getMostRecentWindow("navigator:browser");
-  return recentWindow.content.document.title ? recentWindow.content.document.title : "No Title";
+		   
+	var recentWindow = wm.getMostRecentWindow("navigator:browser");
+	if (type=="title") {
+		return recentWindow.content.document.title ? recentWindow.content.document.title : "No Title";
+	} else {
+		return recentWindow ? recentWindow.content.document.location : null;
+	}
 }
 
 function checkLinks(){
@@ -216,14 +204,8 @@ function state_Change_checkLinks() {
 			}
 			pos = response.indexOf('You have to be logged in', 0); 
 			if (pos > 0){
-				req2 = new XMLHttpRequest();
-				req2.open("POST", 'https://secure.del.icio.us/login/?', true,pass.user,pass.password);
-				req2.setRequestHeader('User-Agent', 'Delinkydink2');
-				req2.setRequestHeader('Accept-Charset','utf-8');
-				req2.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-				req2.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-				req2.onreadystatechange=state_Change_default;
-				req2.send("&username="+pass.user+"&password="+pass.password);
+				doAjax("POST", 'https://secure.del.icio.us/login/?', state_Change_default,pass.user,pass.password);
+				req.send("&username="+pass.user+"&password="+pass.password);
 				showNotificationWindow("Please login to del.icio.us as "+prefs.getCharPref("extensions.delinkydink.username")+" to retrieve your \"links for you\"","",'',false);	
 				gBrowser.selectedTab = gBrowser.addTab("https://secure.del.icio.us/login");	
 			}			
@@ -232,8 +214,8 @@ function state_Change_checkLinks() {
 }		
 
 function state_Change_default() {
-	if (req2.readyState==4) {
-		if (req2.status==200){
+	if (req.readyState==4) {
+		if (req.status==200){
 			//
 		}
 	}
@@ -243,9 +225,9 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 	var j=0;
 	for(i=0;i<freshlinks.length;i++){
 		setTimeout(function() { 
-			thisfreshlinktitle=freshlinks_titles[j];
-			thisfreshlink=freshlinks[j];
-			thisfreshlinkheader="From: "+freshlinks_users[j]+" "+freshlinks_times[j];
+			var thisfreshlinktitle=freshlinks_titles[j];
+			var thisfreshlink=freshlinks[j];
+			var thisfreshlinkheader="From: "+freshlinks_users[j]+" "+freshlinks_times[j];
 			j++;
 			showNotificationWindow(thisfreshlinkheader,thisfreshlinktitle,thisfreshlink)
 		}, (i+1)*6000);
@@ -254,7 +236,7 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 
 var showNotificationWindow = function(label, value, link, linkit) {
 	if(linkit==undefined){linkit=true;}
-	image ="chrome://delinkydink/skin/delinkydink.png"
+	var image ="chrome://delinkydink/skin/delinkydink.png"
 	try {
 		var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
                               .getService(Components.interfaces.nsIAlertsService);
