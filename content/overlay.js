@@ -6,29 +6,35 @@ var Log = {
 };  
 
 Log.log("Starting delinkydink");
-
 var prefs = Components.classes["@mozilla.org/preferences-service;1"]
 				.getService(Components.interfaces.nsIPrefBranch);
+
+
+var pass = '';
+var thisnetworkperson_global;
+var deluser;
+var failed_login_count=0;
+
+function loadPass(){
 var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
 				.getService(Components.interfaces.nsIPasswordManager);
 var queryString = 'api.del.icio.us:443 (del.icio.us API)';
 
-
-var pass = '';
-var clickcount=0;
-var the_package;
-var thisnetworkperson_global;
-var deluser;
-
-var e = passwordManager.enumerator;
-while (e.hasMoreElements()) {
-    try {
-        var pass = e.getNext().QueryInterface(Components.interfaces.nsIPassword);
-    } catch (ex) {
-        var pass = '';
-    }
-}			
-			   
+	var e = passwordManager.enumerator;
+	while (e.hasMoreElements()) {
+	    try {
+	        var pass = e.getNext().QueryInterface(Components.interfaces.nsIPassword);
+			if (pass.host == queryString) {
+	             //break;
+				 return pass.password;
+	        }
+		} catch (ex) {
+	        var pass = '';
+	    }
+	}			
+}
+loadPass();			   
+		
 
 var Delinkydink = {
 	onLoad: function() {
@@ -41,22 +47,21 @@ var Delinkydink = {
 		deluser = '';
 		initialLogin();
 	}
-
+	
 	checkLinks();
 	},
   
 	onClickCommand: function(thisnetworkperson) {
-			doAjax("POST",'https://api.del.icio.us/v1/posts/add?',state_Change_onClickCommand,pass.user,pass.password);
-			the_package="&url="+escape(getURLinfo())+"&description="+escape(getURLinfo('title'))+"&tags="+escape("for:"+thisnetworkperson);
-			thisnetworkperson_global=thisnetworkperson;
-			req.send(the_package); 
+		doAjax("POST",'https://api.del.icio.us/v1/posts/add?',state_Change_onClickCommand,pass.user,pass.password);
+		thisnetworkperson_global=thisnetworkperson;
+		req.send("&url="+escape(getURLinfo())+"&description="+escape(getURLinfo('title'))+"&tags="+escape("for:"+thisnetworkperson)); 
 	}
 };
 
 window.addEventListener("load", function(e) { Delinkydink.onLoad(e); }, false); 
 
 function state_Change_onClickCommand() {
-Log.log("state_Change_onClickCommand = "+req.readyState);
+	Log.log("state_Change_onClickCommand = "+req.readyState);
 	if (req.readyState==4) {
 		if (req.status==200){
 			var xmlDoc=req.responseXML.documentElement;
@@ -107,6 +112,8 @@ function state_Change_initialLogin() {
 			var xmlDoc=req.responseXML.documentElement;
 			xmlDoc.getElementsByTagName("posts");
 			prefs.setCharPref("extensions.delinkydink.username",xmlDoc.attributes.getNamedItem("user").value);
+			deluser=xmlDoc.attributes.getNamedItem("user").value;
+			loadPass();	
 			getNetwork();
 		}else{
 			showNotificationWindow("Error:",req.responseText,'',false);	
@@ -130,15 +137,12 @@ function state_Change_getNetwork() {
 			}
 			for (var i=0, name; name=mynetwork[i]; i++) {
 				var NewMenuItem = document.createElement("menuitem");
-				var LabelAttr = document.createAttribute("label");
-                var OnmouseupAttr = document.createAttribute("onmouseup");
-                
-				LabelAttr.nodeValue = name;
-				OnmouseupAttr.nodeValue = "Delinkydink.onClickCommand('"+name+"');";
-
-				NewMenuItem.setAttributeNode(LabelAttr);
-				NewMenuItem.setAttributeNode(OnmouseupAttr);
-				
+					var LabelAttr = document.createAttribute("label");
+						LabelAttr.nodeValue = name;
+						NewMenuItem.setAttributeNode(LabelAttr);
+					var OnmouseupAttr = document.createAttribute("onmouseup");
+						OnmouseupAttr.nodeValue = "Delinkydink.onClickCommand('"+name+"');";
+						NewMenuItem.setAttributeNode(OnmouseupAttr);
 				document.getElementById('delinkymenu').appendChild(NewMenuItem); 
 			}
 		} 
@@ -151,7 +155,6 @@ function state_Change_getNetwork() {
 function getURLinfo(type) {
 	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"].
            getService(Components.interfaces.nsIWindowMediator);
-		   
 	var recentWindow = wm.getMostRecentWindow("navigator:browser");
 	if (type=="title") {
 		return recentWindow.content.document.title ? recentWindow.content.document.title : "No Title";
@@ -203,11 +206,15 @@ function state_Change_checkLinks() {
 				sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_times);
 			}
 			pos = response.indexOf('You have to be logged in', 0); 
-			if (pos > 0){
-				doAjax("POST", 'https://secure.del.icio.us/login/?', state_Change_default,pass.user,pass.password);
-				req.send("&username="+pass.user+"&password="+pass.password);
-				showNotificationWindow("Please login to del.icio.us as "+prefs.getCharPref("extensions.delinkydink.username")+" to retrieve your \"links for you\"","",'',false);	
-				gBrowser.selectedTab = gBrowser.addTab("https://secure.del.icio.us/login");	
+			pos2 = response.indexOf('in order to save an item, you have to log in', 0);  
+			if (pos + pos2 > 0){
+				failed_login_count++;
+				doAjax("POST", 'https://secure.del.icio.us/login/?', state_Change_default);
+				req.send("&user_name="+deluser+"&password="+loadPass());
+				if(failed_login_count>2 && failed_login_count<5){
+					showNotificationWindow("Please login to del.icio.us as "+prefs.getCharPref("extensions.delinkydink.username")+" to retrieve your \"links for you\"","To stop this alert, check \"Use Password Manager to remember this password\" when you login.",'',false);	
+					gBrowser.selectedTab = gBrowser.addTab("https://secure.del.icio.us/login");
+				}
 			}			
 		}
 	}
@@ -235,24 +242,11 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 }				
 
 var showNotificationWindow = function(label, value, link, linkit) {
-	if(linkit==undefined){linkit=true;}
-	var image ="chrome://delinkydink/skin/delinkydink.png"
-	try {
-		var alertsService = Components.classes["@mozilla.org/alerts-service;1"]
-                              .getService(Components.interfaces.nsIAlertsService);
-		alertsService.showAlertNotification(image, label, value, linkit, link, openLinkNotify);
-	}
-	catch(e) {
-		try { //for linux, needs testing
-			var alertWin = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-			.getService(Components.interfaces.nsIWindowWatcher)
-			.openWindow(null, "chrome://global/content/alerts/alert.xul", "_blank", "chrome,titlebar=no,popup=yes", null);
-			alertWin.arguments = [image, label, value, linkit, link, 0, openLinkNotify];
-			alertWin.setTimeout(function(){alertWin.close()},10000);
-		}
-		catch(e)
-		{}
-	}
+	var alertWin = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+		.getService(Components.interfaces.nsIWindowWatcher)
+		.openWindow(null, "chrome://global/content/alerts/alert.xul", "_blank", "chrome,titlebar=no,popup=yes", null);
+		alertWin.arguments = ["chrome://delinkydink/skin/delinkydink.png", label, value, linkit, link, 0, openLinkNotify];
+		alertWin.setTimeout(function(){alertWin.close()},10000);		
 };
 
 var openLinkNotify = {
@@ -262,4 +256,3 @@ var openLinkNotify = {
     }
   }
 };
-
