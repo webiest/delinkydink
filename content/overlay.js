@@ -32,8 +32,8 @@ var queryString = 'api.del.icio.us:443 (del.icio.us API)';
 	        var pass = '';
 	    }
 	}			
+	return '';
 }
-loadPass();			   
 		
 
 var Delinkydink = {
@@ -52,7 +52,7 @@ var Delinkydink = {
 	},
   
 	onClickCommand: function(thisnetworkperson) {
-		doAjax("POST",'https://api.del.icio.us/v1/posts/add?',state_Change_onClickCommand,pass.user,pass.password);
+		doAjax("POST",'https://api.del.icio.us/v1/posts/add?',state_Change_onClickCommand,deluser,loadPass());
 		thisnetworkperson_global=thisnetworkperson;
 		req.send("&url="+escape(getURLinfo())+"&description="+escape(getURLinfo('title'))+"&tags="+escape("for:"+thisnetworkperson)); 
 	}
