@@ -3,7 +3,21 @@
 	<script src="overlay.js"/>
 	<statusbar id="status-bar">
 		<menu id="delinkydink-menu" label="Send this link to:" onclick="if(event.target.localName=='menu'){document.getElementById('delinkymenu').showPopup();}"> 
-			<menupopup id = "delinkymenu"  onmouseup="document.getElementById('delinkymenu').hidePopup();">
+			<menupopup id = "delinkymenu"  onmouseup="document.getElementById('delinkymenu').hidePopup();">	
+				<menu id="delinkydink_options" label="Options">
+					<menupopup id="delinkydink_options_menu">
+						<menu id="auto_open_menu" label="Auto Open From">
+							<menupopup id="auto_open_people">
+							</menupopup>
+						</menu>
+						<menuseparator/>
+						<menuitem id="send_privately" type="checkbox" label="Send Privately" oncommand="savePref('send_privately');"></menuitem>
+						<!--<menuitem id="delete_after_sending" type="checkbox" label="Delete after sending" oncommand="savePref('delete_after_sending');"></menuitem>-->
+						<menuitem label="view links for you" oncommand="openLinksForYou();"></menuitem>						
+					</menupopup>
+					
+				</menu>
+				<menuseparator/>
 			</menupopup>
 		</menu>
 	</statusbar> 
