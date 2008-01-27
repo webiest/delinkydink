@@ -14,6 +14,7 @@ var pass = '';
 var thisnetworkperson_global;
 var deluser;
 var failed_login_count=0;
+var mynetwork;
 
 function loadPass(){
 var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
@@ -38,23 +39,27 @@ var queryString = 'api.del.icio.us:443 (del.icio.us API)';
 
 var Delinkydink = {
 	onLoad: function() {
-	this.initialized = true;
-	try {
-		deluser=prefs.getCharPref("extensions.delinkydink.username");
-		getNetwork();
-	}
-	catch(e) {
-		deluser = '';
-		initialLogin();
-	}
-	
-	checkLinks();
+		this.initialized = true;
+		try {
+			deluser=prefs.getCharPref("extensions.delinkydink.username");
+			getNetwork();
+		}
+		catch(e) {
+			deluser = '';
+			initialLogin();
+		}
+		checkLinks();
 	},
   
 	onClickCommand: function(thisnetworkperson) {
 		doAjax("POST",'https://api.del.icio.us/v1/posts/add?',state_Change_onClickCommand,deluser,loadPass());
 		thisnetworkperson_global=thisnetworkperson;
-		req.send("&url="+escape(getURLinfo())+"&description="+escape(getURLinfo('title'))+"&tags="+escape("for:"+thisnetworkperson)); 
+		try {
+			var send_private = (prefs.getCharPref("extensions.delinkydink.send_privately")=="true")?"&shared=no":"";
+		}catch(e){
+			var send_private = "";
+		}
+		req.send("&url="+escape(getURLinfo())+"&description="+escape(getURLinfo('title'))+"&tags="+escape("for:"+thisnetworkperson)+send_private); 
 	}
 };
 
@@ -66,8 +71,13 @@ function state_Change_onClickCommand() {
 		if (req.status==200){
 			var xmlDoc=req.responseXML.documentElement;
 			xmlDoc.getElementsByTagName("result");
-			if(xmlDoc.attributes.getNamedItem("code").value=="done"){	
-				showNotificationWindow(getURLinfo('title'),"Sent To "+thisnetworkperson_global, '', false);	
+			if(xmlDoc.attributes.getNamedItem("code").value=="done"){
+				try {
+					var sent_private = (prefs.getCharPref("extensions.delinkydink.send_privately")=="true")?" (privately)":"";
+				}catch(e){
+					var sent_private = "";
+				}			
+				showNotificationWindow(getURLinfo('title'),"Sent To "+thisnetworkperson_global+sent_private, '', false);	
 				thisnetworkperson_global='';
 			}else{
 				showNotificationWindow("Error:",req.responseText,'',false);	
@@ -130,21 +140,34 @@ function getNetwork() {
 function state_Change_getNetwork() {
 	if (req.readyState==4) {
 		if (req.status==200) {
-			var mynetwork = eval('(' + req.responseText + ')');
+			mynetwork = eval('(' + req.responseText + ')');
 			var element = document.getElementById("delinkymenu");
-			while (element.firstChild) {
+			while (element.firstChild && element.firstChild.id!="delinkydink_options") {
 				element.removeChild(element.firstChild);
 			}
 			for (var i=0, name; name=mynetwork[i]; i++) {
 				var NewMenuItem = document.createElement("menuitem");
-					var LabelAttr = document.createAttribute("label");
-						LabelAttr.nodeValue = name;
-						NewMenuItem.setAttributeNode(LabelAttr);
-					var OnmouseupAttr = document.createAttribute("onmouseup");
-						OnmouseupAttr.nodeValue = "Delinkydink.onClickCommand('"+name+"');";
-						NewMenuItem.setAttributeNode(OnmouseupAttr);
-				document.getElementById('delinkymenu').appendChild(NewMenuItem); 
+					NewMenuItem.setAttribute("label",name);
+					NewMenuItem.setAttribute("onmouseup","Delinkydink.onClickCommand('"+name+"');");
+					document.getElementById('delinkymenu').appendChild(NewMenuItem); 
+				var NewMenuItem2 = document.createElement("menuitem");
+					NewMenuItem2.setAttribute("id","auto_open_from_"+name);
+					NewMenuItem2.setAttribute("label",name);
+					NewMenuItem2.setAttribute("type","checkbox");
+					NewMenuItem2.setAttribute("oncommand","savePref('auto_open_from_"+name+"');");
+					try {
+						var CheckedAttr2 = document.createAttribute("checked");
+						CheckedAttr2.nodeValue = (prefs.getCharPref("extensions.delinkydink.auto_open_from_"+name)=="true");
+						NewMenuItem2.setAttributeNode(CheckedAttr2);
+					}catch(e){}
+					document.getElementById('auto_open_people').appendChild(NewMenuItem2); 
 			}
+			try {
+				document.getElementById('send_privately').setAttribute("checked",(prefs.getCharPref("extensions.delinkydink.send_privately")=="true"));
+			}catch(e){}
+			try {
+				document.getElementById('delete_after_sending').setAttribute("checked",(prefs.getCharPref("extensions.delinkydink.delete_after_sending")=="true"));
+			}catch(e){}
 		} 
 		else {
 			showNotificationWindow("Problem retrieving data from del.icio.us!","-");	
@@ -235,8 +258,15 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 			var thisfreshlinktitle=freshlinks_titles[j];
 			var thisfreshlink=freshlinks[j];
 			var thisfreshlinkheader="From: "+freshlinks_users[j]+" "+freshlinks_times[j];
+			try{
+				var open_link_from_user = prefs.getCharPref("extensions.delinkydink.open_from_"+freshlinks_users[j]);
+			}catch(e){}
+			if(open_link_from_user == 'true') {
+				gBrowser.addTab(decodeHtml(unescape(thisfreshlink)));	 
+			}
+			showNotificationWindow(thisfreshlinkheader,thisfreshlinktitle,thisfreshlink);
 			j++;
-			showNotificationWindow(thisfreshlinkheader,thisfreshlinktitle,thisfreshlink)
+			open_link_from_user="false";
 		}, (i+1)*6000);
 	}
 }				
@@ -256,3 +286,15 @@ var openLinkNotify = {
     }
   }
 };
+
+function savePref(name){
+	prefs.setCharPref("extensions.delinkydink."+name,document.getElementById(name).getAttribute("checked"));
+}
+
+function decodeHtml(s){
+	return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>;').replace(/&quot;/g,'\"')
+}
+
+function openLinksForYou(){
+	gBrowser.selectedTab = gBrowser.loadURI('http://del.icio.us/for/'+deluser);
+}
