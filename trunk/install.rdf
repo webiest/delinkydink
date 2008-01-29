@@ -4,7 +4,7 @@
 	<Description about="urn:mozilla:install-manifest">
 	    <em:id>delinkydink@mozilla.doslash.org</em:id>
 	    <em:name>Delinkydink</em:name>
-	    <em:version>1.1</em:version>
+	    <em:version>1.1.2</em:version>
 	    <em:description>Delinkydink</em:description>
 	    <em:creator>Delinkydink</em:creator>
 

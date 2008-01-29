@@ -1,7 +1,7 @@
 var Log = {
   serv: Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService),
   log: function(message) {
-    this.serv.logStringMessage('DLD: '+message);
+    //this.serv.logStringMessage('DLD: '+message);
   }
 };  
 
@@ -14,7 +14,7 @@ var pass = '';
 var thisnetworkperson_global;
 var deluser;
 var failed_login_count=0;
-var mynetwork;
+
 
 function loadPass(){
 var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
@@ -138,14 +138,18 @@ function getNetwork() {
 }
 
 function state_Change_getNetwork() {
+	Log.log("readystate= "+req.readyState);
 	if (req.readyState==4) {
 		if (req.status==200) {
-			mynetwork = eval('(' + req.responseText + ')');
+			var mynetwork = eval('(' + req.responseText + ')');
+			Log.log(mynetwork);
 			var element = document.getElementById("delinkymenu");
 			while (element.firstChild && element.firstChild.id!="delinkydink_options") {
+			Log.log(element.firstChild.id);
 				element.removeChild(element.firstChild);
 			}
 			for (var i=0, name; name=mynetwork[i]; i++) {
+				Log.log(name+i);
 				var NewMenuItem = document.createElement("menuitem");
 					NewMenuItem.setAttribute("label",name);
 					NewMenuItem.setAttribute("onmouseup","Delinkydink.onClickCommand('"+name+"');");
@@ -156,6 +160,7 @@ function state_Change_getNetwork() {
 					NewMenuItem2.setAttribute("type","checkbox");
 					NewMenuItem2.setAttribute("oncommand","savePref('auto_open_from_"+name+"');");
 					try {
+						Log.log("trying...");
 						var CheckedAttr2 = document.createAttribute("checked");
 						CheckedAttr2.nodeValue = (prefs.getCharPref("extensions.delinkydink.auto_open_from_"+name)=="true");
 						NewMenuItem2.setAttributeNode(CheckedAttr2);
@@ -187,8 +192,10 @@ function getURLinfo(type) {
 }
 
 function checkLinks(){
-	doAjax2('get','http://del.icio.us/for/'+deluser,state_Change_checkLinks);
-	req2.send(null);
+	if(deluser!=''){
+		doAjax2('get','http://del.icio.us/for/'+deluser,state_Change_checkLinks);
+		req2.send(null);
+	}
 	setTimeout(function(){checkLinks()},prefs.getIntPref("extensions.delinkydink.interval")*2000);
 }
 
