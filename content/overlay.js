@@ -266,8 +266,9 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 			var thisfreshlink=freshlinks[j];
 			var thisfreshlinkheader="From: "+freshlinks_users[j]+" "+freshlinks_times[j];
 			try{
-				var open_link_from_user = prefs.getCharPref("extensions.delinkydink.open_from_"+freshlinks_users[j]);
-			}catch(e){}
+				var open_link_from_user = prefs.getCharPref("extensions.delinkydink.auto_open_from_"+freshlinks_users[j]);
+				Log.log("open from user="+open_link_from_user);
+			}catch(e){Log.log(e);}
 			if(open_link_from_user == 'true') {
 				gBrowser.addTab(decodeHtml(unescape(thisfreshlink)));	 
 			}
