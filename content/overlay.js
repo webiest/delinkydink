@@ -9,7 +9,7 @@ Log.log("Starting delinkydink");
 var prefs = Components.classes["@mozilla.org/preferences-service;1"]
 				.getService(Components.interfaces.nsIPrefBranch);
 
-
+var idle_time=0;
 var pass = '';
 var thisnetworkperson_global;
 var deluser;
@@ -64,6 +64,7 @@ var Delinkydink = {
 };
 
 window.addEventListener("load", function(e) { Delinkydink.onLoad(e); }, false); 
+window.addEventListener("click", function(e) { idle_time=0; }, false); 
 
 function state_Change_onClickCommand() {
 	Log.log("state_Change_onClickCommand = "+req.readyState);
@@ -192,7 +193,8 @@ function getURLinfo(type) {
 }
 
 function checkLinks(){
-	if(deluser!=''){
+	if(deluser!='' && idle_time < 5){
+		idle_time++;
 		doAjax2('get','http://del.icio.us/for/'+deluser,state_Change_checkLinks);
 		req2.send(null);
 	}
@@ -211,7 +213,6 @@ function state_Change_checkLinks() {
 						
 			response = req2.responseText;
 			pos = response.indexOf('links for you (', pos+1);
-			Log.log(response);
 			if( pos > 0){
 				link_scrape_endpos = response.indexOf('"post first-old-post"', pos+1);
 				while (pos < link_scrape_endpos){
