@@ -211,6 +211,7 @@ function state_Change_checkLinks() {
 						
 			response = req2.responseText;
 			pos = response.indexOf('links for you (', pos+1);
+			Log.log(response);
 			if( pos > 0){
 				link_scrape_endpos = response.indexOf('"post first-old-post"', pos+1);
 				while (pos < link_scrape_endpos){
@@ -241,7 +242,7 @@ function state_Change_checkLinks() {
 				failed_login_count++;
 				doAjax("POST", 'https://secure.del.icio.us/login/?', state_Change_default);
 				req.send("&user_name="+deluser+"&password="+loadPass());
-				if(failed_login_count>2 && failed_login_count<5){
+				if(failed_login_count==1){
 					showNotificationWindow("Please login to del.icio.us as "+prefs.getCharPref("extensions.delinkydink.username")+" to retrieve your \"links for you\"","To stop this alert, check \"Use Password Manager to remember this password\" when you login.",'',false);	
 					gBrowser.selectedTab = gBrowser.addTab("https://secure.del.icio.us/login");
 				}
