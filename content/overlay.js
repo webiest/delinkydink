@@ -193,12 +193,12 @@ function getURLinfo(type) {
 }
 
 function checkLinks(){
-	if(deluser!='' && idle_time < 5){
+	if(deluser!='' && idle_time < 10){
 		idle_time++;
 		doAjax2('get','http://del.icio.us/for/'+deluser,state_Change_checkLinks);
 		req2.send(null);
 	}
-	setTimeout(function(){checkLinks()},prefs.getIntPref("extensions.delinkydink.interval")*2000);
+	setTimeout(function(){checkLinks()},prefs.getIntPref("extensions.delinkydink.interval")*1000);
 }
 
 function state_Change_checkLinks() {
@@ -277,7 +277,7 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 			showNotificationWindow(thisfreshlinkheader,thisfreshlinktitle,thisfreshlink);
 			j++;
 			open_link_from_user="false";
-		}, (i+1)*6000);
+		}, i*6000);
 	}
 }				
 
