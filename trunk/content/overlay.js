@@ -272,7 +272,7 @@ function sendTheLinks(freshlinks,freshlinks_titles,freshlinks_users,freshlinks_t
 				Log.log("open from user="+open_link_from_user);
 			}catch(e){Log.log(e);}
 			if(open_link_from_user == 'true') {
-				gBrowser.addTab(decodeHtml(unescape(thisfreshlink)));	 
+				gBrowser.addTab(decodeHtml(thisfreshlink));	 
 			}
 			showNotificationWindow(thisfreshlinkheader,thisfreshlinktitle,thisfreshlink);
 			j++;
