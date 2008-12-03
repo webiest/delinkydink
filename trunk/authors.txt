@@ -1,2 +1,2 @@
-webiest : webiest : webiest
-osirisx11 : osirisx11 : osirisx11 
+webiest = webiest <webiest@something.com>
+osirisx11 = osirisx11 <osirisx11@something.com> 
